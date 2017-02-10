@@ -26,7 +26,7 @@ import { AppComponent } from './index';
      * NOTE: Needs to be your first import (!)
      * BrowserModule, HttpModule, and JsonpModule are included
      */
-    UniversalModule,
+    BrowserModule,
     FormsModule
     /**
      * using routes
