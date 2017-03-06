@@ -12,6 +12,7 @@ export default Blueprint.extend({
     { name: 'source-dir', type: String, default: 'src', aliases: ['sd'] },
     { name: 'prefix', type: String, default: 'app', aliases: ['p'] },
     { name: 'style', type: String },
+    { name: 'browser', type: Boolean, default: true, aliases: ['b'] },
     { name: 'routing', type: Boolean, default: false },
     { name: 'inline-style', type: Boolean, default: false, aliases: ['is'] },
     { name: 'inline-template', type: Boolean, default: false, aliases: ['it'] },
@@ -23,6 +24,16 @@ export default Blueprint.extend({
       return Blueprint.ignoredUpdateFiles =
         Blueprint.ignoredUpdateFiles.concat(options.ignoredUpdateFiles);
     }
+  },
+
+  afterInstall: function (options: any) {
+    const bluePrints = [];
+
+    if (options.browser) {
+      bluePrints.push(Blueprint.load(path.join(__dirname, '../browser')).install(options));
+    }
+
+    return Promise.all(bluePrints);
   },
 
   locals: function(options: any) {
@@ -51,6 +62,7 @@ export default Blueprint.extend({
       prefix: options.prefix,
       styleExt: this.styleExt,
       relativeRootPath: relativeRootPath,
+      browser: options.browser,
       routing: options.routing,
       inlineStyle: options.inlineStyle,
       inlineTemplate: options.inlineTemplate,

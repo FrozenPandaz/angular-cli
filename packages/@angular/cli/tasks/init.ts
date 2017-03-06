@@ -71,6 +71,7 @@ export default Task.extend({
       sourceDir: commandOptions.sourceDir,
       style: commandOptions.style,
       prefix: commandOptions.prefix,
+      browser: commandOptions.browser,
       routing: commandOptions.routing,
       inlineStyle: commandOptions.inlineStyle,
       inlineTemplate: commandOptions.inlineTemplate,

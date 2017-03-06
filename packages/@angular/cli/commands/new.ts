@@ -101,6 +101,12 @@ const NewCommand = Command.extend({
       description: 'The prefix to use for all component selectors.'
     },
     {
+      name: 'browser',
+      type: Boolean,
+      default: true,
+      description: 'Generate a browser app.'
+    },
+    {
       name: 'routing',
       type: Boolean,
       default: false,
