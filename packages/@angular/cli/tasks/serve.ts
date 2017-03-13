@@ -1,15 +1,13 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as chalk from 'chalk';
-import * as rimraf from 'rimraf';
 import * as webpack from 'webpack';
 import * as url from 'url';
 import { oneLine, stripIndents } from 'common-tags';
 import { getWebpackStatsConfig } from '../models/webpack-configs/utils';
-import { NgCliWebpackConfig } from '../models/webpack-config';
 import { ServeTaskOptions } from '../commands/serve';
+import { getWebpackConfig } from '../utilities/config-utils';
 import { CliConfig } from '../models/config';
-import { getAppFromConfig } from '../utilities/app-utils';
 
 const WebpackDevServer = require('webpack-dev-server');
 const Task = require('../ember-cli/lib/models/task');
@@ -21,17 +19,9 @@ export default Task.extend({
     const ui = this.ui;
 
     let webpackCompiler: any;
-    const projectConfig = CliConfig.fromProject().config;
-    const appConfig = getAppFromConfig(serveTaskOptions.app);
-
-    const outputPath = serveTaskOptions.outputPath || appConfig.outDir;
-    if (this.project.root === outputPath) {
-      throw new SilentError('Output path MUST not be project root directory!');
-    }
-    if (projectConfig.project && projectConfig.project.ejected) {
-      throw new SilentError('An ejected project cannot use the build command anymore.');
-    }
-    rimraf.sync(path.resolve(this.project.root, outputPath));
+    const project = this.project;
+    const webpackConfigs: any[] = getWebpackConfig(serveTaskOptions, project);
+    const webpackConfig = webpackConfigs[0];
 
     const serveDefaults = {
       // default deployUrl to '' on serve to prevent the default from .angular-cli.json
@@ -39,8 +29,6 @@ export default Task.extend({
     };
 
     serveTaskOptions = Object.assign({}, serveDefaults, serveTaskOptions);
-
-    let webpackConfig = new NgCliWebpackConfig(serveTaskOptions, appConfig).buildConfig();
 
     const serverAddress = url.format({
       protocol: serveTaskOptions.ssl ? 'https' : 'http',
@@ -101,7 +89,7 @@ export default Task.extend({
       });
     }
 
-    webpackCompiler = webpack(webpackConfig);
+    webpackCompiler = webpack(webpackConfigs);
 
     if (rebuildDoneCb) {
       webpackCompiler.plugin('done', rebuildDoneCb);
@@ -136,7 +124,7 @@ export default Task.extend({
     const webpackDevServerConfiguration: IWebpackDevServerConfigurationOptions = {
       headers: { 'Access-Control-Allow-Origin': '*' },
       historyApiFallback: {
-        index: `/${appConfig.index}`,
+        index: `/${CliConfig.fromProject().config.apps[0].index}`,
         disableDotRule: true,
         htmlAcceptHeaders: ['text/html', 'application/xhtml+xml']
       },

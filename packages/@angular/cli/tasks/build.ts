@@ -1,35 +1,20 @@
-import * as rimraf from 'rimraf';
 import * as path from 'path';
 import * as webpack from 'webpack';
 
-import { getAppFromConfig } from '../utilities/app-utils';
 import { BuildTaskOptions } from '../commands/build';
-import { NgCliWebpackConfig } from '../models/webpack-config';
 import { getWebpackStatsConfig } from '../models/webpack-configs/utils';
+import { getWebpackConfig } from '../utilities/config-utils';
 import { CliConfig } from '../models/config';
 
 const fs = require('fs');
 const Task = require('../ember-cli/lib/models/task');
-const SilentError = require('silent-error');
 
 
 export default Task.extend({
   run: function (runTaskOptions: BuildTaskOptions) {
     const project = this.cliProject;
-    const config = CliConfig.fromProject().config;
+    const webpackConfig: any[] = getWebpackConfig(runTaskOptions, project);
 
-    const app = getAppFromConfig(runTaskOptions.app);
-
-    const outputPath = runTaskOptions.outputPath || app.outDir;
-    if (project.root === outputPath) {
-      throw new SilentError('Output path MUST not be project root directory!');
-    }
-    if (config.project && config.project.ejected) {
-      throw new SilentError('An ejected project cannot use the build command anymore.');
-    }
-    rimraf.sync(path.resolve(project.root, outputPath));
-
-    const webpackConfig = new NgCliWebpackConfig(runTaskOptions, app).buildConfig();
     const webpackCompiler = webpack(webpackConfig);
     const statsConfig = getWebpackStatsConfig(runTaskOptions.verbose);
 
@@ -49,7 +34,9 @@ export default Task.extend({
           const jsonStats = stats.toJson('verbose');
 
           fs.writeFileSync(
-            path.resolve(project.root, outputPath, 'stats.json'),
+            path.resolve(
+              project.root, CliConfig.fromProject().config.apps[0].outDir, 'stats.json'
+            ),
             JSON.stringify(jsonStats, null, 2)
           );
         }
