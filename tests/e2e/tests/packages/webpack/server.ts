@@ -6,15 +6,15 @@ import {expectFileToMatch} from '../../../utils/fs';
 
 export default function(skipCleaning: () => void) {
   return Promise.resolve()
-    .then(() => createProjectFromAsset('webpack/test-server-app'))
-    .then(() => exec(normalize('node_modules/.bin/webpack')))
-    .then(() => expectFileToMatch('dist/app.main.js',
+    .then(() => createProjectFromAsset('webpack/test-app'))
+    .then(() => exec(normalize('node_modules/.bin/webpack --config webpack.server.config.js')))
+    .then(() => expectFileToMatch('dist/app.server.main.js',
       new RegExp('.bootstrapModuleFactory'))
-    .then(() => expectFileToMatch('dist/app.main.js',
+    .then(() => expectFileToMatch('dist/app.server.main.js',
       new RegExp('MyInjectable.ctorParameters = .*'
                + 'type: .*ViewContainerRef.*'
                + 'type: undefined, decorators.*Inject.*args: .*DOCUMENT.*'))
-    .then(() => expectFileToMatch('dist/app.main.js',
+    .then(() => expectFileToMatch('dist/app.server.main.js',
       new RegExp('AppComponent.ctorParameters = .*MyInjectable'))
     .then(() => skipCleaning());
 }
