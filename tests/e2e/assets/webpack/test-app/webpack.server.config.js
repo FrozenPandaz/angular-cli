@@ -4,12 +4,11 @@ module.exports = {
   resolve: {
     extensions: ['.ts', '.js']
   },
-  target: 'web',
-  entry: './app/main.ts',
+  entry: './app/main.server.aot.ts',
   output: {
     path: './dist',
     publicPath: 'dist/',
-    filename: 'app.main.js'
+    filename: 'app.server.main.js'
   },
   plugins: [
     new ngToolsWebpack.AotPlugin({
@@ -23,8 +22,5 @@ module.exports = {
       { test: /\.html$/, loader: 'raw-loader' },
       { test: /\.ts$/, loader: '@ngtools/webpack' }
     ]
-  },
-  devServer: {
-    historyApiFallback: true
   }
 };
