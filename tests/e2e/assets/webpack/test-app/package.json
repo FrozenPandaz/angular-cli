@@ -1,6 +1,9 @@
 {
   "name": "test",
   "license": "MIT",
+  "scripts": {
+    "webpack": "webpack"
+  },
   "dependencies": {
     "@angular/animations": "^4.0.0",
     "@angular/common": "^4.0.0",
@@ -22,7 +25,7 @@
     "performance-now": "^0.2.0",
     "raw-loader": "^0.5.1",
     "sass-loader": "^3.2.0",
-    "typescript": "~2.3.0",
+    "typescript": "^2.3.2",
     "webpack": "2.4.1"
   }
 }
