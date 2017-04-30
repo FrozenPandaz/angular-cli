@@ -4,6 +4,7 @@ module.exports = {
   resolve: {
     extensions: ['.ts', '.js']
   },
+  target: 'node',
   entry: './app/main.server.aot.ts',
   output: {
     path: './dist',
