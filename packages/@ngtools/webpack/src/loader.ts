@@ -21,6 +21,10 @@ const changeMap: {[key: string]: Platform} = {
   platformDynamicServer: {
     name: 'platformServer',
     importLocation: '@angular/platform-server'
+  },
+  renderModule: {
+    name: 'renderModuleFactory',
+    importLocation: '@angular/platform-server'
   }
 };
 
@@ -190,7 +194,8 @@ function _removeDecorators(refactor: TypeScriptFileRefactor) {
 function _replaceBootstrap(plugin: AotPlugin, refactor: TypeScriptFileRefactor) {
   // If bootstrapModule can't be found, bail out early.
   if (!refactor.sourceMatch(/\bbootstrapModule\b/)) {
-    return;
+    console.log('no bootstrap');
+    // return;
   }
 
   // Calculate the base path.
@@ -214,6 +219,11 @@ function _replaceBootstrap(plugin: AotPlugin, refactor: TypeScriptFileRefactor) 
       return access.name.kind == ts.SyntaxKind.Identifier
           && access.name.text == 'bootstrapModule';
     });
+  const renders = allCalls
+    .map(call => call.expression as ts.CallExpression)
+    .filter(expression => {
+      return expression.getText() === 'renderModule';
+    });
 
   const calls: ts.CallExpression[] = bootstraps
     .reduce((previous, access) => {
@@ -227,7 +237,7 @@ function _replaceBootstrap(plugin: AotPlugin, refactor: TypeScriptFileRefactor) 
       return !!changeMap[(call.expression as ts.Identifier).text];
     });
 
-  if (calls.length == 0) {
+  if (calls.length == 0 && renders.length == 0) {
     // Didn't find any dynamic bootstrapping going on.
     return;
   }
@@ -235,6 +245,11 @@ function _replaceBootstrap(plugin: AotPlugin, refactor: TypeScriptFileRefactor) 
   // Create the changes we need.
   allCalls
     .filter(call => bootstraps.some(bs => bs == call.expression))
+    .forEach((call: ts.CallExpression) => {
+      refactor.replaceNode(call.arguments[0], entryModule.className + 'NgFactory');
+    });
+  allCalls
+    .filter(call => renders.some(bs => bs == call.expression))
     .forEach((call: ts.CallExpression) => {
       refactor.replaceNode(call.arguments[0], entryModule.className + 'NgFactory');
     });
@@ -255,7 +270,13 @@ function _replaceBootstrap(plugin: AotPlugin, refactor: TypeScriptFileRefactor) 
       refactor.replaceNode(bs.name, 'bootstrapModuleFactory');
     });
 
+  renders.forEach(a => {
+    refactor.replaceNode(a, 'renderModuleFactory');
+    refactor.insertImport('renderModuleFactory', '@angular/platform-server');
+  });
+
   refactor.insertImport(entryModule.className + 'NgFactory', ngFactoryPath);
+  console.log(ngFactoryPath);
 }
 
 export function removeModuleIdOnlyForTesting(refactor: TypeScriptFileRefactor) {
