@@ -192,35 +192,31 @@ function _removeDecorators(refactor: TypeScriptFileRefactor) {
 
 
 function _replaceBootstrap(plugin: AotPlugin, refactor: TypeScriptFileRefactor) {
+  const entryModule = plugin.entryModule;
+
   // If bootstrapModule can't be found, bail out early.
-  if (!refactor.sourceMatch(/\bbootstrapModule\b/)) {
-    console.log('no bootstrap');
-    // return;
+  if (!refactor.sourceMatch(/\bbootstrapModule\b/) && !refactor.sourceMatch(/\brenderModule\b/) && !refactor.sourceMatch(new RegExp(entryModule.className))) {
+    return;
   }
 
   // Calculate the base path.
   const basePath = path.normalize(plugin.basePath);
   const genDir = path.normalize(plugin.genDir);
   const dirName = path.normalize(path.dirname(refactor.fileName));
-  const entryModule = plugin.entryModule;
-  const entryModuleFileName = path.normalize(entryModule.path + '.ngfactory');
-  const relativeEntryModulePath = path.relative(basePath, entryModuleFileName);
-  const fullEntryModulePath = path.resolve(genDir, relativeEntryModulePath);
-  const relativeNgFactoryPath = path.relative(dirName, fullEntryModulePath);
-  const ngFactoryPath = './' + relativeNgFactoryPath.replace(/\\/g, '/');
 
   // Bail if we're in the genDir
   if (dirName.includes(genDir)) {
     return;
   }
 
-  const allCalls = refactor.findAstNodes(refactor.sourceFile,
-    ts.SyntaxKind.CallExpression, true) as ts.CallExpression[];
+  const entryModuleFileName = path.normalize(entryModule.path + '.ngfactory');
+  const relativeEntryModulePath = path.relative(basePath, entryModuleFileName);
+  const fullEntryModulePath = path.resolve(genDir, relativeEntryModulePath);
+  const relativeNgFactoryPath = path.relative(dirName, fullEntryModulePath);
+  const ngFactoryPath = './' + relativeNgFactoryPath.replace(/\\/g, '/');
 
-  const declarations = refactor
-    .findAstNodes(refactor.sourceFile, ts.SyntaxKind.Identifier, true) as ts.Identifier[];
-
-  const entryModules = declarations
+  const entryModules = refactor
+    .findAstNodes(refactor.sourceFile, ts.SyntaxKind.Identifier, true)
     .filter(a => a.parent.kind !== ts.SyntaxKind.ClassDeclaration && a.parent.kind !== ts.SyntaxKind.ImportSpecifier)
     .filter(a => {
       return a.getText() === entryModule.className;
@@ -237,6 +233,9 @@ function _replaceBootstrap(plugin: AotPlugin, refactor: TypeScriptFileRefactor) 
     });
 
   refactor.insertImport(entryModule.className + 'NgFactory', ngFactoryPath);
+
+  const allCalls = refactor.findAstNodes(refactor.sourceFile,
+    ts.SyntaxKind.CallExpression, true) as ts.CallExpression[];
 
   const bootstraps = allCalls
     .filter(call => call.expression.kind == ts.SyntaxKind.PropertyAccessExpression)
