@@ -188,13 +188,6 @@ function _removeDecorators(refactor: TypeScriptFileRefactor) {
 
 
 function _replaceBootstrap(plugin: AotPlugin, refactor: TypeScriptFileRefactor) {
-  const entryModule = plugin.entryModule;
-
-  // If bootstrapModule can't be found, bail out early.
-  if (!refactor.sourceMatch(/\bbootstrapModule\b/) && !refactor.sourceMatch(/\brenderModule\b/) && !refactor.sourceMatch(new RegExp(entryModule.className))) {
-    return;
-  }
-
   // Calculate the base path.
   const basePath = path.normalize(plugin.basePath);
   const genDir = path.normalize(plugin.genDir);
@@ -202,6 +195,13 @@ function _replaceBootstrap(plugin: AotPlugin, refactor: TypeScriptFileRefactor) 
 
   // Bail if we're in the genDir
   if (dirName.includes(genDir)) {
+    return;
+  }
+
+  const entryModule = plugin.entryModule;
+
+  // If bootstrapModule can't be found, bail out early.
+  if (!refactor.sourceMatch(/\bbootstrapModule\b/) && !refactor.sourceMatch(/\brenderModule\b/) && !refactor.sourceMatch(new RegExp(entryModule.className))) {
     return;
   }
 
