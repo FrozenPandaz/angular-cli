@@ -209,8 +209,34 @@ function _replaceBootstrap(plugin: AotPlugin, refactor: TypeScriptFileRefactor) 
   const relativeNgFactoryPath = path.relative(dirName, fullEntryModulePath);
   const ngFactoryPath = './' + relativeNgFactoryPath.replace(/\\/g, '/');
 
+  // Bail if we're in the genDir
+  if (dirName.includes(genDir)) {
+    return;
+  }
+
   const allCalls = refactor.findAstNodes(refactor.sourceFile,
     ts.SyntaxKind.CallExpression, true) as ts.CallExpression[];
+
+  const declarations = refactor
+    .findAstNodes(refactor.sourceFile, ts.SyntaxKind.Identifier, true) as ts.Identifier[];
+
+  const entryModules = declarations
+    .filter(a => a.parent.kind !== ts.SyntaxKind.ClassDeclaration && a.parent.kind !== ts.SyntaxKind.ImportSpecifier)
+    .filter(a => {
+      return a.getText() === entryModule.className;
+    });
+
+  // Bail if there are no entry module idenfiers
+  if (entryModules.length == 0) {
+    return;
+  }
+
+  entryModules
+    .forEach(a => {
+      refactor.replaceNode(a, entryModule.className + 'NgFactory');
+    });
+
+  refactor.insertImport(entryModule.className + 'NgFactory', ngFactoryPath);
 
   const bootstraps = allCalls
     .filter(call => call.expression.kind == ts.SyntaxKind.PropertyAccessExpression)
@@ -242,18 +268,6 @@ function _replaceBootstrap(plugin: AotPlugin, refactor: TypeScriptFileRefactor) 
     return;
   }
 
-  // Create the changes we need.
-  allCalls
-    .filter(call => bootstraps.some(bs => bs == call.expression))
-    .forEach((call: ts.CallExpression) => {
-      refactor.replaceNode(call.arguments[0], entryModule.className + 'NgFactory');
-    });
-  allCalls
-    .filter(call => renders.some(bs => bs == call.expression))
-    .forEach((call: ts.CallExpression) => {
-      refactor.replaceNode(call.arguments[0], entryModule.className + 'NgFactory');
-    });
-
   calls.forEach(call => {
     const platform = changeMap[(call.expression as ts.Identifier).text];
 
@@ -274,9 +288,6 @@ function _replaceBootstrap(plugin: AotPlugin, refactor: TypeScriptFileRefactor) 
     refactor.replaceNode(a, 'renderModuleFactory');
     refactor.insertImport('renderModuleFactory', '@angular/platform-server');
   });
-
-  refactor.insertImport(entryModule.className + 'NgFactory', ngFactoryPath);
-  console.log(ngFactoryPath);
 }
 
 export function removeModuleIdOnlyForTesting(refactor: TypeScriptFileRefactor) {
