@@ -21,10 +21,6 @@ const changeMap: {[key: string]: Platform} = {
   platformDynamicServer: {
     name: 'platformServer',
     importLocation: '@angular/platform-server'
-  },
-  renderModule: {
-    name: 'renderModuleFactory',
-    importLocation: '@angular/platform-server'
   }
 };
 
