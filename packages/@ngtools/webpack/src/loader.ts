@@ -435,6 +435,33 @@ function _diagnoseDeps(reasons: ModuleReason[], plugin: AotPlugin, checked: Set<
 }
 
 
+export function _stuff(plugin: AotPlugin, refactor: TypeScriptFileRefactor) {
+  if (!plugin.replaceExport) {
+    return;
+  }
+
+  const exports = refactor
+    .findAstNodes(refactor.sourceFile, ts.SyntaxKind.ExportDeclaration, true);
+
+  exports
+    .filter(node => {
+
+      const identifiers = refactor.findAstNodes(node, ts.SyntaxKind.Identifier, false);
+
+      identifiers
+        .filter(node => node.getText() === plugin.entryModule.className);
+
+      return identifiers.length > 0;
+    })
+    .forEach(node => {
+      const factoryPath = _getNgFactoryPath(plugin, refactor);
+      const factoryClassName = plugin.entryModule.className + 'NgFactory';
+      const exportStatement = `export \{ ${factoryClassName} \} from '${factoryPath}'`;
+      refactor.appendAfter(node, exportStatement);
+    });
+}
+
+
 // Super simple TS transpiler loader for testing / isolated usage. does not type check!
 export function ngcLoader(this: LoaderContext & { _compilation: any }, source: string | null) {
   const cb = this.async();
@@ -464,7 +491,8 @@ export function ngcLoader(this: LoaderContext & { _compilation: any }, source: s
         if (!plugin.skipCodeGeneration) {
           return Promise.resolve()
             .then(() => _removeDecorators(refactor))
-            .then(() => _refactorBootstrap(plugin, refactor));
+            .then(() => _refactorBootstrap(plugin, refactor))
+            .then(() => _stuff(plugin, refactor));
         } else {
           return Promise.resolve()
             .then(() => _replaceResources(refactor))

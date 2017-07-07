@@ -25,6 +25,7 @@ export interface AotPluginOptions {
   mainPath?: string;
   typeChecking?: boolean;
   skipCodeGeneration?: boolean;
+  replaceExport?: boolean;
   hostOverrideFileSystem?: { [path: string]: string };
   hostReplacementPaths?: { [path: string]: string };
   i18nFile?: string;
@@ -59,6 +60,7 @@ export class AotPlugin implements Tapable {
 
   private _typeCheck = true;
   private _skipCodeGeneration = false;
+  private _replaceExport = false;
   private _basePath: string;
   private _genDir: string;
 
@@ -89,6 +91,7 @@ export class AotPlugin implements Tapable {
   get genDir() { return this._genDir; }
   get program() { return this._program; }
   get skipCodeGeneration() { return this._skipCodeGeneration; }
+  get replaceExport() { return this._replaceExport; }
   get typeCheck() { return this._typeCheck; }
   get i18nFile() { return this._i18nFile; }
   get i18nFormat() { return this._i18nFormat; }
@@ -231,6 +234,9 @@ export class AotPlugin implements Tapable {
     }
     if (options.hasOwnProperty('locale')) {
       this._locale = options.locale;
+    }
+    if (options.hasOwnProperty('replaceExport')) {
+      this._replaceExport = options.replaceExport || this._replaceExport;
     }
   }
 
