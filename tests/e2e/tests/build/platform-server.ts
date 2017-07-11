@@ -11,6 +11,11 @@ export default function () {
     return Promise.resolve();
   }
 
+  // Skip this for ejected tests.
+  if (getGlobalVariable('argv').eject) {
+    return Promise.resolve();
+  }
+
   return Promise.resolve()
     .then(() => updateJsonFile('.angular-cli.json', configJson => {
       const app = configJson['apps'][0];
