@@ -50,6 +50,7 @@ export class AotPlugin implements Tapable {
   private _rootFilePath: string[];
   private _compilerHost: WebpackCompilerHost;
   private _resourceLoader: WebpackResourceLoader;
+  private _discoveredLazyRoutes: LazyRouteMap;
   private _lazyRoutes: LazyRouteMap = Object.create(null);
   private _tsConfigPath: string;
   private _entryModule: string;
@@ -97,6 +98,8 @@ export class AotPlugin implements Tapable {
   get i18nFormat() { return this._i18nFormat; }
   get locale() { return this._locale; }
   get firstRun() { return this._firstRun; }
+  get lazyRoutes() { return this._lazyRoutes; }
+  get discoveredLazyRoutes() { return this._discoveredLazyRoutes; }
 
   private _setupOptions(options: AotPluginOptions) {
     // Fill in the missing options.
@@ -497,7 +500,7 @@ export class AotPlugin implements Tapable {
       .then(() => {
         // We need to run the `listLazyRoutes` the first time because it also navigates libraries
         // and other things that we might miss using the findLazyRoutesInAst.
-        let discoveredLazyRoutes: LazyRouteMap = this.firstRun ?
+        this._discoveredLazyRoutes = this.firstRun ?
           __NGTOOLS_PRIVATE_API_2.listLazyRoutes({
             program: this._program,
             host: this._compilerHost,
@@ -507,9 +510,9 @@ export class AotPlugin implements Tapable {
           : this._findLazyRoutesInAst();
 
         // Process the lazy routes discovered.
-        Object.keys(discoveredLazyRoutes)
+        Object.keys(this.discoveredLazyRoutes)
           .forEach(k => {
-            const lazyRoute = discoveredLazyRoutes[k];
+            const lazyRoute = this.discoveredLazyRoutes[k];
             k = k.split('#')[0];
             if (lazyRoute === null) {
               return;
